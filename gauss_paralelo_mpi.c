@@ -1,3 +1,5 @@
+//autor: Pedro Naidhig Puzzi
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -6,12 +8,135 @@
 #include <unistd.h>
 
 
-//vars globais
+int rank,size; //vars globais
 
-int rank,size;
-// map[i] == quantas linhas o processador i possui 
 
-// depois uso isso para encontrar o indice das linhas referentes a cada processador 
+//retorna a matriz(vetor..) double lida do arquivo texto
+
+int getDimensaoMatriz() { 
+
+    FILE *fp = fopen("matriz.txt","r");    
+    
+    int linesize = 1024;        
+    char line[linesize];            
+
+    char *token = NULL;
+    const char *espaco = " "; //delimitador
+
+    int nele = 0; //auxiliar pra contar o numero de elementos
+    
+    fgets(line, sizeof(line), fp);
+    token = strtok(line, espaco);            
+    
+    while(token != NULL) {
+        //printf("%s\n",token);
+        token=strtok(NULL,espaco);                
+        nele++;
+    }                                    
+
+    fclose(fp);
+    return nele;
+}   
+
+//retorna a matriz(vetor..) double lida do arquivo texto
+double *ler_matriz_arquivo() { 
+
+    float num;
+    
+    int linesize = 1024;        
+    char line[linesize];            
+    
+    int i=0;    
+
+    char *token = NULL;
+    
+    const char *espaco = " ";
+
+    int dimensao; 
+    dimensao = getDimensaoMatriz();
+    
+    double *A = malloc(dimensao*dimensao*sizeof(double));
+
+    
+    FILE *fp = fopen("matriz.txt","r");    
+    
+    if( fp == NULL ) {                       
+        printf("problemas ao abrir o arquivo");        
+        return 0;
+    }
+
+    while (!feof (fp)) {
+        if (fgets(line, sizeof (line), fp)) {            
+            //printf("%s",line);            
+            token = strtok(line, espaco);            
+            while(token != NULL) {                
+                num = atof(token);                                                
+                //printf("%.3f\n",num);
+                A[i] = num;                                                                
+                token=strtok(NULL,espaco);                
+                i++;
+            }                                    
+        }
+    }    
+    fclose(fp);        
+    return A;
+}
+
+double *ler_vetor_arquivo() { 
+
+    float num;
+    
+    int linesize = 1024;        
+    char line[linesize];            
+    
+    int i=0;    
+
+    char *token = NULL;
+    
+    const char *espaco = " ";
+
+    int dimensao; 
+    dimensao = getDimensaoMatriz();
+    
+    double *A = malloc(dimensao*sizeof(double));
+
+    
+    FILE *fp = fopen("vetor.txt","r");    
+    
+    if( fp == NULL ) {                       
+        printf("problemas ao abrir o arquivo");        
+        return 0;
+    }
+
+    while (!feof (fp)) {
+        if (fgets(line, sizeof (line), fp)) {            
+            //printf("%s",line);            
+            token = strtok(line, espaco);            
+            while(token != NULL) {                
+                num = atof(token);                                                
+                //printf("%.3f\n",num);
+                A[i] = num;                                                                
+                token=strtok(NULL,espaco);                
+                i++;
+            }                                    
+        }
+    }
+    
+    fclose(fp);
+        
+    return A;
+}
+
+int escrever_y_arquivo(double *b,int dim) { 
+    
+    FILE *fp = fopen("resposta.txt","w+");    
+           
+    for(int j=0;j<dim;j++) {
+        //printf("%2.f\n",array[j]);
+         fprintf(fp,"%f\n",b[j]);         
+    }        
+    return 0;
+}
 
 void print_matriz( double *Matriz, int y, int x ) {  
   
@@ -35,22 +160,23 @@ void meu_print_matriz(double *M,int nlinhas,int ncolunas)  {
     }    
 }
 
-void substituicao_reversa_com_print( double *A, double *y, int n) {
+void substituicao_reversa_com_print(double *A, double *y, int n) {
   
   int i, j;  
   double x[n];
 
-  for(i =n-1; i >= 0; i--) {
+for(i =n-1; i >= 0; i--) {
     x[i] = y[i];
     for(j = n-1; j > i; j--) {
       x[i] = x[i] - x[j] * A[i*n+j];        
     }
-  }
+    y[i] = x[i];
+}
   
   //printa o resultado
   for(i = 0; i < n; i=i+4) {
     for(j = i; j<i+4 && j<n; j++ ) { 
-        printf("x[%d]=%.2f ",j,x[j]);        
+        printf("x[%d]=%.3f ",j,x[j]);        
     }
     printf("\n");        
   }
@@ -73,11 +199,13 @@ void mapearProcesssos_Linhas(int nlinhas,int *map) {
     for (j = 0; j < size; j++)
         map[j] = 0;    
     
-    for (i = size-1; i>=0; i--)
-        for (j = 0; j < nlinhas; j++)
+    for (i = size-1; i>=0; i--) { 
+        for (j = 0; j < nlinhas; j++) { 
             if (j%size == i) { 
                 map[i] += 1;
             }
+        }
+    }
 }
 
 void gerar_matriz_inteiros(double *A,double *b,int nlinhas,int ncolunas) { 
@@ -217,7 +345,7 @@ void gaus_paralelo(double *A,double *b,double *y,int nlinhas,int ncolunas,int *m
             //printf("calcular a linha pivo rank %d k = %d\n",rank,k);
             klocal = (k/size)*nlinhas;
             
-            //printf("rank %d elemento pivo %.2f\n",rank,A[klocal]+k);      
+            //printf("rank %d elemento pivo %.3f\n",rank,A[klocal]+k);      
             //printf("rank %d klocal %d\n",rank,klocal);
             for (j = k+1; j < ncolunas; j++) {
                 matrizLocal[klocal+j] = matrizLocal[klocal+j] / matrizLocal[klocal+k];                
@@ -266,15 +394,13 @@ void gaus_paralelo(double *A,double *b,double *y,int nlinhas,int ncolunas,int *m
         
         if (rank <= k%size) {
             comeco = (int)k/size+1;            
-            printf("rank %d k = %d comeco(0) = %d/%d = %d\n",rank,k,k,size,k/size);
+            //printf("rank %d k = %d comeco(0) = %d/%d = %d\n",rank,k,k,size,k/size);
         }
         else {
             comeco = (int)k/size;           
-            printf("rank %d k = %d comeco(1) = %d/%d = %d\n",rank,k,k,size,k/size);
+            //printf("rank %d k = %d comeco(1) = %d/%d = %d\n",rank,k,k,size,k/size);
 
-        }
-
-        
+        }                
         for (i = comeco; i < map[rank]; i++) {             
             
             in = i*ncolunas; 
@@ -287,9 +413,7 @@ void gaus_paralelo(double *A,double *b,double *y,int nlinhas,int ncolunas,int *m
             matrizLocal[ink] = 0.0;
         }           
     }
-    
-    
-    
+        
     juntar_matriz(A,matrizLocal,nlocais,ncolunas,map);        
     juntar_matriz(y,yLocal,nlinhas,1,map);     
 
@@ -298,8 +422,8 @@ void gaus_paralelo(double *A,double *b,double *y,int nlinhas,int ncolunas,int *m
 
 int main () { 
 
-    int nlinhas = 5;
-    int ncolunas = 5;                
+    int nlinhas;
+    int ncolunas;                
     
     int *map;
     
@@ -307,33 +431,32 @@ int main () {
     
     MPI_Comm_size(MPI_COMM_WORLD, &size);    
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);    
+                
+    double *A;
+    double *b;
+    double *y; //variaveis onde serão alocadas as matrizes
     
-    //if (rank == 0) {
-    
-        double *A;
-        double *b;
-        double *y; //variaveis onde serão alocadas as matrizes
-        
-        A = (double*)malloc(nlinhas*ncolunas*sizeof(double));
-        b = (double*)malloc(nlinhas*sizeof(double));
-        y = (double*)malloc(nlinhas*sizeof(double));
-    
-        gerar_matriz(A,b,nlinhas);
-    
-        map = (int*)malloc(size*sizeof(int));                
-        mapearProcesssos_Linhas(nlinhas,map);        
-        
-        
-    //Matriz teste
-    // double A[] = {33,47,50,30,18,38,13,59,17,1,60,35,40,87,4,32,90,5,37,91,88,67,31,85,68};
-    // double b[] = {11,18,5,12,40};
+    int dimensao = getDimensaoMatriz();
 
+    nlinhas = dimensao;
+    ncolunas = dimensao;                
+        
+    //gerar_matriz(A,b,nlinhas);
+
+    map = (int*)malloc(size*sizeof(int));                
+    mapearProcesssos_Linhas(nlinhas,map);            
 
     if (rank == 0) { 
-        print_matriz(A,nlinhas,ncolunas);
+        
+        //dimensao = getDimensaoMatriz();
+        A = ler_matriz_arquivo();                        
+        b = ler_vetor_arquivo(); 
+        y = (double*)malloc(dimensao*sizeof(double));
+        //mapearProcesssos_Linhas(nlinhas,map);            
+    
     }
     
-    gaus_paralelo(A,b,y,nlinhas,ncolunas,map);    
+    gaus_paralelo(A,b,y,dimensao,dimensao,map);    
     
     MPI_Barrier( MPI_COMM_WORLD );
 
@@ -345,7 +468,8 @@ int main () {
         printf("\n");
         print_matriz(y,1,ncolunas);
         printf("\n");
-        substituicao_reversa_com_print(A,y,nlinhas);
+        substituicao_reversa_com_print(A,y,dimensao);
+        escrever_y_arquivo(y,dimensao);
         printf("\nprocesso 0 dizendo adeus\n");
     }
     
