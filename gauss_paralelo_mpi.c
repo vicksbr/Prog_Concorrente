@@ -39,7 +39,7 @@ int getDimensaoMatriz() {
 }   
 
 //retorna a matriz(vetor..) double lida do arquivo texto
-double *ler_matriz_arquivo() { 
+double *ler_matriz_arquivo(int dimensao) { 
 
     float num;
     
@@ -51,9 +51,6 @@ double *ler_matriz_arquivo() {
     char *token = NULL;
     
     const char *espaco = " ";
-
-    int dimensao; 
-    dimensao = getDimensaoMatriz();
     
     double *A = malloc(dimensao*dimensao*sizeof(double));
 
@@ -82,7 +79,7 @@ double *ler_matriz_arquivo() {
     return A;
 }
 
-double *ler_vetor_arquivo() { 
+double *ler_vetor_arquivo(int dimensao) { 
 
     float num;
     
@@ -94,9 +91,6 @@ double *ler_vetor_arquivo() {
     char *token = NULL;
     
     const char *espaco = " ";
-
-    int dimensao; 
-    dimensao = getDimensaoMatriz();
     
     double *A = malloc(dimensao*sizeof(double));
 
@@ -478,10 +472,9 @@ int main () {
     mapearProcesssos_Linhas(nlinhas,map);            
 
     if (rank == 0) { 
-        
-        //dimensao = getDimensaoMatriz();
-        A = ler_matriz_arquivo();                        
-        b = ler_vetor_arquivo(); 
+
+        A = ler_matriz_arquivo(dimensao);                        
+        b = ler_vetor_arquivo(dimensao); 
         y = (double*)malloc(dimensao*sizeof(double));
         //mapearProcesssos_Linhas(nlinhas,map);            
     
