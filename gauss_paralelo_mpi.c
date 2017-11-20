@@ -154,7 +154,7 @@ void meu_print_matriz(double *M,int nlinhas,int ncolunas)  {
     
     for (i=0; i < nlinhas; i++) {                
         for(j=0; j < ncolunas; j++) {
-            printf("\t%.1f",M[i*nlinhas+j]);
+            printf("\t%.1f",M[i*ncolunas+j]);
         }
         printf("\n");
     }    
@@ -305,6 +305,37 @@ void juntar_matriz(double *A, double *matrizLocal, int nlinhas, int ncolunas,int
         // print_matriz(matrizLocal,map[rank],ncolunas);            
         // printf("\n");
     }
+}
+
+void serial_gaussian( double *A, double *b, double *y, int n )
+{
+  int i, j, k;
+
+  cout << "In serial algorithm" << endl;
+
+  for( k=0; k<n; k++ ) {		// k = current row
+    for( j=k+1; j<n; j++ ) {		// in division step
+      if( A[k*n+k] != 0)
+        A[k*n+j] = A[k*n+j] / A[k*n+k];
+      else
+        A[k*n+j] = 0;
+    }
+
+    if( A[k*n+k] != 0 )			// calculates new value
+      y[k] = b[k] / A[k*n+k];		// for equation solution
+    else
+      y[k] = 0.0;
+
+    A[k*n+k] = 1.0;			// sets UTM diagonal value
+
+    for( i=k+1; i<n; i++ ) {		// Guassian elimination occurs
+      for( j=k+1; j<n; j++ )		// in all remaining rows
+        A[i*n+j] -= A[i*n+k] * A[k*n+j];
+
+      b[i] -= A[i*n+k] * y[k];
+      A[i*n+k] = 0.0;
+    }
+  }
 }
 
 void gaus_paralelo(double *A,double *b,double *y,int nlinhas,int ncolunas,int *map) { 
